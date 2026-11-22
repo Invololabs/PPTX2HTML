@@ -3,7 +3,7 @@
  * pictures, filters) and CSS backgrounds.
  */
 import { css } from '../pptx/color.js';
-import { r2, r4 } from '../util/units.js';
+import { r2, r4, LAYOUT_SCALE } from '../util/units.js';
 
 /** 8x8 bitmaps (one byte per row, MSB = left pixel) for preset patterns. */
 const PATTERNS = {
@@ -250,8 +250,9 @@ function tilePattern(fill, w, h, rc, defs) {
   const href = rc.url(fill.image);
   const img = fill.image || {};
   const t = fill.tile;
-  const nw = img.width ? (img.width * 96) / (img.dpiX || 96) : 64;
-  const nh = img.height ? (img.height * 96) / (img.dpiY || 96) : 64;
+  // SkyOwl patch 2: an image's natural size in layout pixels.
+  const nw = (img.width ? (img.width * 96) / (img.dpiX || 96) : 64) * LAYOUT_SCALE;
+  const nh = (img.height ? (img.height * 96) / (img.dpiY || 96) : 64) * LAYOUT_SCALE;
   const tw = Math.max(1, nw * t.sx);
   const th = Math.max(1, nh * t.sy);
   // Alignment anchor.

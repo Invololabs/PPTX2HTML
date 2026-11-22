@@ -1,8 +1,15 @@
 /** Unit helpers. All geometry is converted to CSS pixels at 96 DPI. */
 
-export const EMU_PER_PX = 9525;
+/**
+ * SkyOwl patch 2 (21 Nov 2026, docker/deck-render/README.md): lay the slide out at twice CSS-pixel size. The player
+ * scales the stage to the window anyway, so it looks the same, but small type stays above a browser's minimum font
+ * size: at 1x, 6–8 pt table text is 8–10.7 px before the scale, a browser with "never use font sizes smaller than
+ * 12" enlarges it, and the rows grow off the slide. Upstream: 1.
+ */
+export const LAYOUT_SCALE = Number(globalThis.process?.env?.PPTX2HTML_LAYOUT_SCALE) || 2;
+export const EMU_PER_PX = 9525 / LAYOUT_SCALE;
 export const EMU_PER_PT = 12700;
-export const PX_PER_PT = 96 / 72;
+export const PX_PER_PT = (96 / 72) * LAYOUT_SCALE;
 
 export const emu2px = (v) => (Number(v) || 0) / EMU_PER_PX;
 export const pt2px = (v) => (Number(v) || 0) * PX_PER_PT;

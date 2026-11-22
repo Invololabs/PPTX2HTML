@@ -4,7 +4,8 @@
 import { Ctx } from './context.js';
 import { Theme } from './theme.js';
 import { DEFAULT_CLR_MAP } from './color.js';
-import { emu2px } from '../util/units.js';
+// SkyOwl patch 2: geometry at the layout scale (EMU_PER_PX, LAYOUT_SCALE), not a fixed 96 dpi.
+import { emu2px, EMU_PER_PX, LAYOUT_SCALE } from '../util/units.js';
 import {
   parseFill, parseFillNode, fillChild, parseLine, mergeLines, finalizeLine, parseEffects,
   fillFromRef, lineFromRef, effectsFromRef, parseBlipFill,
@@ -423,20 +424,20 @@ export class SlideBuilder {
       if (prst) {
         const name = prst.attr('prst', 'rect');
         const adj = parseAvLst(prst.child('a:avLst'));
-        let g = presetGeometry(name, el.wEmu || 0, el.hEmu || 0, adj, 1 / 9525);
+        let g = presetGeometry(name, el.wEmu || 0, el.hEmu || 0, adj, 1 / EMU_PER_PX);
         if (!g) {
           if (!hasPreset(name)) this.doc.diag.add('unsupported', 'preset geometry ' + name, this.part);
-          g = presetGeometry('rect', el.wEmu || 0, el.hEmu || 0, {}, 1 / 9525);
+          g = presetGeometry('rect', el.wEmu || 0, el.hEmu || 0, {}, 1 / EMU_PER_PX);
         }
         return { name, adj, ...g };
       }
       const cust = spPr.child('a:custGeom');
       if (cust) {
         const def = customGeometryDef(cust);
-        return { name: 'custom', ...computeGeometry(def, el.wEmu || 0, el.hEmu || 0, {}, 1 / 9525) };
+        return { name: 'custom', ...computeGeometry(def, el.wEmu || 0, el.hEmu || 0, {}, 1 / EMU_PER_PX) };
       }
     }
-    return { name: 'rect', ...presetGeometry('rect', el.wEmu || 0, el.hEmu || 0, {}, 1 / 9525) };
+    return { name: 'rect', ...presetGeometry('rect', el.wEmu || 0, el.hEmu || 0, {}, 1 / EMU_PER_PX) };
   }
 
   /** Visual properties (fill, line, effects) from spPr chain and style. */
@@ -751,7 +752,7 @@ export class SlideBuilder {
     }
     el.kind = 'pic';
     el.ole = { progId: ole.attr('progId', ''), name: ole.attr('name', '') };
-    el.geom = { name: 'rect', ...presetGeometry('rect', el.wEmu || 0, el.hEmu || 0, {}, 1 / 9525) };
+    el.geom = { name: 'rect', ...presetGeometry('rect', el.wEmu || 0, el.hEmu || 0, {}, 1 / EMU_PER_PX) };
     el.fill = { type: 'none' };
     el.line = null;
     if (pic) {
@@ -784,7 +785,7 @@ export class SlideBuilder {
         const img = /<v:imagedata\b[^>]*\b(?:o:relid|r:id)=["']([^"']+)["']/.exec(m[0]);
         const style = /\bstyle=(["'])([\s\S]*?)\1/.exec(m[0]);
         const box = {};
-        const UNIT = { pt: 4 / 3, px: 1, in: 96, cm: 96 / 2.54, mm: 96 / 25.4, emu: 1 / 9525 };
+        const UNIT = { pt: (4 / 3) * LAYOUT_SCALE, px: LAYOUT_SCALE, in: 96 * LAYOUT_SCALE, cm: (96 / 2.54) * LAYOUT_SCALE, mm: (96 / 25.4) * LAYOUT_SCALE, emu: 1 / EMU_PER_PX };
         for (const decl of (style ? style[2] : '').split(';')) {
           const [k, val] = decl.split(':').map((t) => (t || '').trim());
           const mm = /^(-?[\d.]+)([a-z]*)$/.exec(val || '');
@@ -819,8 +820,8 @@ export class SlideBuilder {
       out.push({
         kind: 'pic', id: c.attrs.spid, name: c.attrs.name || '', descr: '', hidden: false, layer: 'slide', ph: null,
         domId: 's' + this.info.index + '-s-' + c.attrs.spid + '-' + (this.idSeq++),
-        x, y, w, h, wEmu: w * 9525, hEmu: h * 9525, rot: 0, flipH: false, flipV: false,
-        geom: { name: 'rect', ...presetGeometry('rect', w * 9525, h * 9525, {}, 1 / 9525) },
+        x, y, w, h, wEmu: w * EMU_PER_PX, hEmu: h * EMU_PER_PX, rot: 0, flipH: false, flipV: false,
+        geom: { name: 'rect', ...presetGeometry('rect', w * EMU_PER_PX, h * EMU_PER_PX, {}, 1 / EMU_PER_PX) },
         fill: { type: 'none' }, line: null, effects: null,
         blip: { type: 'blip', image: vml.image, srcRect: null, rotWithShape: true, dpi: 0, alpha: 1, effects: [] },
         control: { name: c.attrs.name || '' },
@@ -890,7 +891,7 @@ export class SlideBuilder {
       if (s) lines.push(s);
     }
     el.kind = 'shape';
-    el.geom = { name: 'rect', ...presetGeometry('rect', el.wEmu || 0, el.hEmu || 0, {}, 1 / 9525) };
+    el.geom = { name: 'rect', ...presetGeometry('rect', el.wEmu || 0, el.hEmu || 0, {}, 1 / EMU_PER_PX) };
     el.fill = { type: 'none' };
     el.line = null;
     el.effects = null;

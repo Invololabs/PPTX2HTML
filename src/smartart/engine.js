@@ -14,10 +14,12 @@
  * and quick style parts.
  */
 import { XNode } from '../util/xml.js';
+import { EMU_PER_PX, LAYOUT_SCALE } from '../util/units.js';
 
-const EMU = 9525; // per px
-const MM = 3.7795; // px per mm
-const PT = 4 / 3; // px per pt
+// SkyOwl patch 2: SmartArt's own px at the layout scale.
+const EMU = EMU_PER_PX; // per px
+const MM = 3.7795 * LAYOUT_SCALE; // px per mm
+const PT = (4 / 3) * LAYOUT_SCALE; // px per pt
 
 // ---- XML helpers ----------------------------------------------------------------
 

@@ -3,7 +3,7 @@
  */
 import { escapeXml } from '../util/xml.js';
 import { css } from '../pptx/color.js';
-import { r2, r4, PX_PER_PT } from '../util/units.js';
+import { r2, r4, PX_PER_PT, EMU_PER_PX } from '../util/units.js';
 import { fontStack } from './fonts.js';
 import { cssBackground, fillColor } from './paint.js';
 import { textWarpGeometry, segsToPolyline } from '../geometry/geometry.js';
@@ -226,7 +226,7 @@ export function paragraphsHtml(tb, rc, o = {}) {
 function warpAttr(b, w, h) {
   if (!b.warp || b.warp === 'textNoShape' || (b.vert && b.vert !== 'horz')) return '';
   const iw = Math.max(1, w - b.lIns - b.rIns), ih = Math.max(1, h - b.tIns - b.bIns);
-  const g = textWarpGeometry(b.warp, iw * 9525, ih * 9525, b.warpAdj || {}, 1 / 9525);
+  const g = textWarpGeometry(b.warp, iw * EMU_PER_PX, ih * EMU_PER_PX, b.warpAdj || {}, 1 / EMU_PER_PX) /* SkyOwl patch 2 */;
   if (!g || !g.paths.length) return '';
   const paths = g.paths.map((p) => segsToPolyline(p.segs).map((v, i) => Math.round((v + (i % 2 ? b.tIns : b.lIns)) * 10) / 10));
   return ` data-warp="${escapeXml(JSON.stringify({ k: b.warp, p: paths }))}"`;
