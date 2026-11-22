@@ -70,13 +70,22 @@ function fixedTables() {
 }
 
 /**
+ * SkyOwl patch 4: the most one ZIP part may inflate to (`PPTX2HTML_MAX_PART_BYTES`, default 256 MiB). A real slide
+ * part or image is far smaller; a hostile deck can declare 4 GB (ZIP64) or deflate a few KB into gigabytes.
+ */
+const envNum = (k) => Number(globalThis.process?.env?.[k]) || 0;
+export const MAX_INFLATE_BYTES = envNum('PPTX2HTML_MAX_PART_BYTES') || 256 * 1024 * 1024;
+
+/**
  * Inflate raw deflate data.
  * @param {Uint8Array} input
  * @param {number} [sizeHint] expected output size
  * @returns {Uint8Array}
  */
-export function inflateRaw(input, sizeHint = 0) {
-  let out = new Uint8Array(sizeHint > 0 ? sizeHint : Math.max(1024, input.length * 4));
+export function inflateRaw(input, sizeHint = 0, maxOut = MAX_INFLATE_BYTES) {
+  // SkyOwl patch 4: a declared or actual size past the limit is a zip bomb, not a slide part.
+  if (sizeHint > maxOut) throw new Error('inflate: part larger than the limit');
+  let out = new Uint8Array(sizeHint > 0 ? sizeHint : Math.min(maxOut, Math.max(1024, input.length * 4)));
   let op = 0;
   let pos = 0; // byte position
   let bitBuf = 0;
@@ -99,8 +108,10 @@ export function inflateRaw(input, sizeHint = 0) {
   }
   function ensure(extra) {
     if (op + extra <= out.length) return;
+    if (op + extra > maxOut) throw new Error('inflate: output larger than the limit');
     let ns = out.length * 2;
     while (ns < op + extra) ns *= 2;
+    ns = Math.min(ns, maxOut);
     const n = new Uint8Array(ns);
     n.set(out.subarray(0, op));
     out = n;

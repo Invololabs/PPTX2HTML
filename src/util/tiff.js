@@ -88,7 +88,8 @@ export function decodeTiff(b) {
   }
   const one = (t, d) => (tags[t] && tags[t].length ? tags[t][0] : d);
   const W = one(256, 0), H = one(257, 0);
-  if (!W || !H || W * H > 64e6) return null;
+  // SkyOwl patch 4: 25 MP is far past any slide picture; the samples below take W·H·spp·2 bytes.
+  if (!W || !H || W * H > 25e6) return null;
   const bps = tags[258] || [1];
   const bits = bps[0];
   const comp = one(259, 1);
@@ -103,6 +104,7 @@ export function decodeTiff(b) {
   const tiled = !!tags[322];
   const tw = tiled ? one(322, W) : W;
   const th = tiled ? one(323, H) : one(278, H);
+  if (!tw || !th || tw * th > 25e6) return null;
   const offsets = tiled ? tags[324] : tags[273];
   const counts = tiled ? tags[325] : tags[279];
   if (!offsets || !counts) return null;

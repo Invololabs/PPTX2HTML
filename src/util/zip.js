@@ -1,7 +1,7 @@
 /**
  * Minimal ZIP archive reader (store + deflate, ZIP64 aware).
  */
-import { inflateRaw } from './inflate.js';
+import { inflateRaw, MAX_INFLATE_BYTES } from './inflate.js';
 
 const CP437 = '\u0000☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼ !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~⌂ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ';
 
@@ -35,6 +35,11 @@ function decodeName(bytes, isUtf8) {
   for (let i = 0; i < bytes.length; i++) s += CP437[bytes[i]];
   return s;
 }
+
+/** SkyOwl patch 4: limits for an untrusted archive (`PPTX2HTML_MAX_ENTRIES`, `PPTX2HTML_MAX_TOTAL_BYTES`). */
+const envNum = (k) => Number(globalThis.process?.env?.[k]) || 0;
+export const MAX_ZIP_ENTRIES = envNum('PPTX2HTML_MAX_ENTRIES') || 20000;
+export const MAX_ZIP_TOTAL_BYTES = envNum('PPTX2HTML_MAX_TOTAL_BYTES') || 512 * 1024 * 1024;
 
 export class ZipArchive {
   /** @param {Uint8Array|ArrayBuffer} data */
@@ -106,6 +111,8 @@ export class ZipArchive {
       const real = eocd - cdSize;
       if (real >= 0 && v.getUint32(real, true) === 0x02014b50) shift = real - cdOff;
     }
+    // SkyOwl patch 4: a deck has hundreds of parts, not tens of thousands.
+    if (count > MAX_ZIP_ENTRIES) throw new Error('Too many ZIP entries (' + count + ')');
     let p = cdOff + shift;
     for (let k = 0; k < count && p + 46 <= n; k++) {
       if (v.getUint32(p, true) !== 0x02014b50) break;
@@ -203,8 +210,14 @@ export class ZipArchive {
     const start = e.local + 30 + nameLen + extraLen;
     const raw = this.data.subarray(start, start + e.csize);
     let out;
+    // SkyOwl patch 4: bound each part and everything inflated from this archive (every part is cached).
+    if (e.usize > MAX_INFLATE_BYTES) throw new Error('ZIP part too large: ' + e.name);
     if (e.method === 0) out = raw;
-    else if (e.method === 8) out = inflateRaw(raw, e.usize);
+    else if (e.method === 8) {
+      out = inflateRaw(raw, e.usize);
+      this.inflated = (this.inflated || 0) + out.length;
+      if (this.inflated > MAX_ZIP_TOTAL_BYTES) throw new Error('ZIP archive inflates past the limit');
+    }
     else throw new Error('Unsupported ZIP compression method ' + e.method + ' for ' + e.name);
     e.data = out;
     return out;
