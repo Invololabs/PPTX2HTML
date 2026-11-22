@@ -14,7 +14,6 @@ const PARTS = ['wholeTbl', 'band1H', 'band2H', 'band1V', 'band2V', 'lastCol', 'f
 function findStyle(doc, id, tblPr) {
   const inline = tblPr && tblPr.child('a:tableStyle');
   if (inline) return inline;
-  if (!id) return null;
   if (!doc.tableStyles) {
     doc.tableStyles = new Map();
     const pres = doc.mainPart;
@@ -25,6 +24,10 @@ function findStyle(doc, id, tblPr) {
       for (const s of root.all('a:tblStyle')) doc.tableStyles.set(s.attr('styleId', ''), s);
     }
   }
+  // SkyOwl patch 1 (21 Nov 2026, docker/deck-render/README.md): a table with no a:tableStyleId takes the
+  // presentation's default table style (tableStyles.xml @def), as PowerPoint draws it; upstream drew it unstyled.
+  if (!id) id = doc.tableStylesDef || null;
+  if (!id) return null;
   if (doc.tableStyles.has(id)) return doc.tableStyles.get(id);
   const xml = builtinTableStyle(id);
   if (xml) {
