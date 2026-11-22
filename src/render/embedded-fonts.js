@@ -44,6 +44,11 @@ function sniffFont(bytes) {
   return null;
 }
 
+/** SkyOwl patch 3: a font family name safe inside a CSS string in a <style> element: letters, digits, space, `.`, `_`, `-`. */
+export function safeFamily(name) {
+  return String(name ?? '').replace(/[^\p{L}\p{N} ._-]/gu, '').trim().slice(0, 64);
+}
+
 export function fontFaceCss(pres, rc) {
   if (!pres.fonts || !pres.fonts.length || rc.opts.embedFonts === false) return '';
   let out = '';
@@ -67,7 +72,11 @@ export function fontFaceCss(pres, rc) {
       if (!font) continue;
       const weight = variant === 'bold' || variant === 'boldItalic' ? 'bold' : 'normal';
       const style = variant === 'italic' || variant === 'boldItalic' ? 'italic' : 'normal';
-      out += `@font-face{font-family:"${f.typeface.replace(/"/g, '')}";src:url(data:${mime};base64,${toBase64(font)});font-weight:${weight};font-style:${style};}`;
+      // SkyOwl patch 3: the typeface comes from the deck and lands inside <style>, so keep only the characters a font
+      // name needs. Removing just `"` let a name like `x</style><script>…` close the style and run script.
+      const family = safeFamily(f.typeface);
+      if (!family) continue;
+      out += `@font-face{font-family:"${family}";src:url(data:${mime};base64,${toBase64(font)});font-weight:${weight};font-style:${style};}`;
     }
   }
   return out;
