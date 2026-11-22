@@ -5,7 +5,7 @@ import { escapeXml } from '../util/xml.js';
 import { r2 } from '../util/units.js';
 import { css } from '../pptx/color.js';
 import { geometrySvg } from './shape.js';
-import { textBodyHtml } from './text.js';
+import { textBodyHtml, cleanUrl } from './text.js';
 import { svgPaint, cssBackground } from './paint.js';
 import { tableHtml } from './table.js';
 import { chartHtml } from '../chart/render.js';
@@ -42,7 +42,8 @@ function linkOverlay(el) {
   const l = el.link;
   if (!l) return '';
   if (l.url) {
-    const safe = /^(https?:|mailto:|ftp:|tel:|file:)/i.test(l.url) ? l.url : '#';
+    const url = cleanUrl(l.url); // SkyOwl patch 6: checked as a browser reads it
+    const safe = /^(https?:|mailto:|ftp:|tel:|file:)/i.test(url) ? url : '#';
     return `<a class="pp-hit" href="${escapeXml(safe)}" target="_blank" rel="noopener noreferrer"${l.tooltip ? ` title="${escapeXml(l.tooltip)}"` : ''}></a>`;
   }
   if (l.slide !== undefined && l.slide !== null) return `<a class="pp-hit" href="#slide-${l.slide + 1}" data-slide="${l.slide}"></a>`;

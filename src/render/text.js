@@ -86,10 +86,20 @@ export function runCss(st, rc, o = {}) {
   return s;
 }
 
+/**
+ * SkyOwl patch 6: a link's URL as a browser reads it, before the scheme check. A browser drops leading and trailing
+ * spaces and control characters and every tab or newline (WHATWG URL), so `java\tscript:` or ` javascript:` passed a
+ * check made on the raw string and still ran. This drops every control character and trims the ends.
+ */
+export function cleanUrl(url) {
+  return String(url ?? '').replace(/[\u0000-\u001f\u007f-\u009f]/g, '').replace(/^[\s\u00a0\ufeff]+|[\s\u00a0\ufeff]+$/g, '');
+}
+
 function linkAttrs(link) {
   if (!link) return null;
   if (link.url) {
-    const safe = /^(https?:|mailto:|ftp:|tel:|#|file:)/i.test(link.url) ? link.url : (/^[a-z][a-z0-9+.-]*:/i.test(link.url) ? '#' : link.url);
+    const url = cleanUrl(link.url);
+    const safe = /^(https?:|mailto:|ftp:|tel:|#|file:)/i.test(url) ? url : (/^[a-z][a-z0-9+.-]*:/i.test(url) ? '#' : url);
     return `href="${escapeXml(safe)}" target="_blank" rel="noopener noreferrer"${link.tooltip ? ` title="${escapeXml(link.tooltip)}"` : ''}`;
   }
   if (link.slide !== undefined && link.slide !== null) return `href="#slide-${link.slide + 1}" data-slide="${link.slide}"${link.tooltip ? ` title="${escapeXml(link.tooltip)}"` : ''}`;
