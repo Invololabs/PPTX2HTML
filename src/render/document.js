@@ -21,8 +21,13 @@ function mediaRefs(value, rc) {
   return value;
 }
 
-/** Data consumed by the runtime player (timing, transitions, notes...). */
-export function playerData(pres, rc) {
+/**
+ * Data consumed by the runtime player (timing, transitions, notes...).
+ * SkyOwl patch 5: `opts.notes === false` leaves the speaker notes out of the page (they are the presenter's, not the
+ * audience's; the player's notes panel is then empty).
+ */
+export function playerData(pres, rc, opts = {}) {
+  const withNotes = opts.notes !== false;
   return mediaRefs({
     width: pres.width,
     height: pres.height,
@@ -35,7 +40,7 @@ export function playerData(pres, rc) {
       name: s.name || '',
       transition: s.transition || null,
       timing: s.timing || null,
-      notes: s.notes || null,
+      notes: withNotes ? s.notes || null : null,
     })),
   }, rc);
 }
@@ -52,7 +57,7 @@ export function renderSlides(pres, opts = {}) {
   const rc = new RenderContext(pres, opts);
   const slides = pres.slides.map((s) => slideHtml(s, rc));
   const css = BASE_CSS + fontFaceCss(pres, rc);
-  return { slides, css, data: playerData(pres, rc), rc };
+  return { slides, css, data: playerData(pres, rc, opts), rc };
 }
 
 /**

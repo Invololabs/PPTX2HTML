@@ -19,6 +19,7 @@ export { BASE_CSS } from './render/styles.js';
  * @param {boolean} [options.player] embed the runtime player (default true)
  * @param {string} [options.title] document title
  * @param {(media: object) => string} [options.mediaUrl] custom URL for images/media (default: data URIs)
+ * @param {boolean} [options.notes] false leaves the speaker notes out of the page (default true; SkyOwl patch 5)
  * @returns {{html: string, presentation: object, diagnostics: object[]}}
  */
 export function convert(data, options = {}) {
