@@ -898,7 +898,7 @@ export class SlideBuilder {
     el.text = {
       body: { lIns: 4, tIns: 4, rIns: 4, bIns: 4, anchor: 'ctr', anchorCtr: false, wrap: 'square', vert: 'horz', rot: 0, upright: false, numCol: 1, spcCol: 0, autofit: { type: 'none', fontScale: 1, lnSpcReduction: 0 }, warp: 'textNoShape' },
       paragraphs: lines.map((t, i) => ({
-        index: i, lvl: 0, align: 'center', marL: 0, marR: 0, indent: 0, rtl: false, defTab: 96, lnSpc: null, spcBef: null, spcAft: null, tabs: [], bullet: null,
+        index: i, lvl: 0, align: 'center', marL: 0, marR: 0, indent: 0, rtl: false, defTab: 96 * LAYOUT_SCALE /* SkyOwl patch 2 */, lnSpc: null, spcBef: null, spcAft: null, tabs: [], bullet: null,
         runs: [{ kind: 'text', text: t, style: { size: 14, bold: false, italic: false, latin: ctx.theme.minorFont.latin, fill: { type: 'solid', color: ctx.color({ name: 'a:schemeClr', attrs: { val: 'tx1' }, children: [] }) }, cap: 'none', spacing: 0, baseline: 0 } }],
         endStyle: { size: 14 },
       })),

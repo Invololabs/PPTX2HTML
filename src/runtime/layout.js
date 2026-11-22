@@ -17,13 +17,22 @@ function stopsOf(p) {
   return list.sort((a, b) => a.pos - b.pos);
 }
 
+/**
+ * SkyOwl patch 2: CSS pixels per 96-dpi pixel in this render (the converter's LAYOUT_SCALE, written on the deck as
+ * data-layout-scale; 1 for a page without it).
+ */
+function layoutScale(el) {
+  const deck = el.closest ? el.closest('[data-layout-scale]') : null;
+  return (deck && Number(deck.getAttribute('data-layout-scale'))) || 1;
+}
+
 /** Lay out the tabs of every paragraph under root (idempotent). */
 export function layoutTabs(root) {
   for (const p of root.querySelectorAll('.pp-p[data-deftab]')) {
     const tabs = [...p.querySelectorAll('.pp-tab')];
     if (!tabs.length || p.offsetParent === null) continue;
     const stops = stopsOf(p);
-    const def = Number(p.getAttribute('data-deftab')) || 96;
+    const def = Number(p.getAttribute('data-deftab')) || 96 * layoutScale(p);
     const end = p.querySelector('.pp-tab-end');
     for (const t of tabs) {
       t.textContent = '';

@@ -3,7 +3,7 @@
  */
 import { escapeXml } from '../util/xml.js';
 import { css } from '../pptx/color.js';
-import { r2, r4, PX_PER_PT, EMU_PER_PX } from '../util/units.js';
+import { r2, r4, PX_PER_PT, EMU_PER_PX, LAYOUT_SCALE } from '../util/units.js';
 import { fontStack } from './fonts.js';
 import { cssBackground, fillColor } from './paint.js';
 import { textWarpGeometry, segsToPolyline } from '../geometry/geometry.js';
@@ -176,7 +176,7 @@ export function paragraphsHtml(tb, rc, o = {}) {
       const stops = p.tabs.map((t) => ({ pos: t.pos, algn: t.algn === 'dec' ? 'r' : t.algn }));
       // A hanging indent acts as a tab stop at the left margin.
       if (p.indent < 0 && p.marL > 0) stops.push({ pos: p.marL, algn: 'l' });
-      tabAttrs = ` data-tabs="${stops.map((t) => r2(t.pos) + ':' + t.algn).join(',')}" data-deftab="${r2(p.defTab)}"`;
+      tabAttrs = ` data-tabs="${stops.map((t) => r2(t.pos) + ':' + t.algn).join(',')}" data-deftab="${r2(p.defTab > 0 ? p.defTab : 96 * LAYOUT_SCALE)}"`; // SkyOwl patch 2: one inch at the layout scale
     }
     let inner = '';
     const hasContent = p.runs.some((r) => r.kind !== 'br' && r.text);

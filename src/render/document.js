@@ -6,6 +6,7 @@ import { RenderContext } from './context.js';
 import { slideHtml } from './slide.js';
 import { BASE_CSS } from './styles.js';
 import { fontFaceCss } from './embedded-fonts.js';
+import { LAYOUT_SCALE } from '../util/units.js';
 
 /** Replace media descriptors (sounds) by URL objects for the runtime. */
 function mediaRefs(value, rc) {
@@ -70,7 +71,7 @@ export function renderDocument(pres, opts = {}) {
 body.pp-body{margin:0;background:#3a3a3a;font-family:system-ui,sans-serif}
 .pp-list .pp-slide{margin:24px auto;box-shadow:0 2px 12px rgba(0,0,0,.4)}
 `;
-  const deck = `<div class="pp-deck pp-${mode}" data-width="${pres.width}" data-height="${pres.height}">${r.slides.join('\n')}</div>`;
+  const deck = `<div class="pp-deck pp-${mode}" data-width="${pres.width}" data-height="${pres.height}" data-layout-scale="${LAYOUT_SCALE}">${r.slides.join('\n')}</div>`;
   const data = `<script type="application/json" id="pp-data">${jsonScript(r.data)}</script>`;
   const player = opts.player ? `<script>${opts.player}\n</script>` : '';
   return `<!DOCTYPE html>
